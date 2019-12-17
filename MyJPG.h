@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <thread>
 #include "Image.h"
 #include "Gauss.h"
 
@@ -16,6 +17,8 @@
 		cos() * cos() + cos() * cos() + ... + cos() * cos()
 */
 std::array<std::array<float, block_size_sqr + 1>, block_size_sqr> cosblocks;
+
+constexpr size_t num_threads = { 8 };
 
 class MyJPG
 {
@@ -39,7 +42,20 @@ class MyJPG
 	FileManager export_file;
 	FileManager import_file;
 
+	std::array<std::array<std::thread, num_threads>, 3> y_cb_cr_calc_threads;
+
 private:
+
+	void CalcProc(size_t i, size_t end, size_t channel, size_t thread_index)
+	{
+		std::array<std::array<float, block_size_sqr + 1>, block_size_sqr> thread_cb = cosblocks;
+		for (; i < end; i++)
+		{
+			for (size_t j = 0; j < block_size_sqr; j++)
+				thread_cb[j][block_size_sqr] = ((float)(y_cb_cr_blocks[channel][i][j / block_size][j % block_size]) / 127.5f) - 1.f;
+			gauss(thread_cb, y_cb_cr_results[channel][i]);
+		}
+	}
 
 	void CalculateResultsFromSubsampledData()
 	{
@@ -90,14 +106,22 @@ private:
 		y_cb_cr_results[1].assign(num_cb_blocks, {});
 		y_cb_cr_results[2].assign(num_cr_blocks, {});
 
+		std::array<std::array<float, block_size_sqr + 1>, block_size_sqr> main_cb = cosblocks;
+
+		size_t blocks_per_thread;
+
 		// calculate results
 		for (channel = 0; channel < 3; channel++)
 		{
-			for (i = 0; i < y_cb_cr_results[channel].size(); i++)
+			blocks_per_thread = y_cb_cr_results[channel].size() / num_threads;
+			for (i = 0; i < num_threads; i++)
+				y_cb_cr_calc_threads[channel][i] = std::thread{ &MyJPG::CalcProc, this, i * blocks_per_thread, i * blocks_per_thread + blocks_per_thread, channel, i };
+
+			for (i *= blocks_per_thread; i < y_cb_cr_results[channel].size(); i++)
 			{
 				for (j = 0; j < block_size_sqr; j++)
-					cosblocks[j][block_size_sqr] = ((float)(y_cb_cr_blocks[channel][i][j / block_size][j % block_size]) / 127.5f) - 1.f;
-				res = gauss(cosblocks, y_cb_cr_results[channel][i]);
+					main_cb[j][block_size_sqr] = ((float)(y_cb_cr_blocks[channel][i][j / block_size][j % block_size]) / 127.5f) - 1.f;
+				res = gauss(main_cb, y_cb_cr_results[channel][i]);
 				/*switch (res) /////////////////////////////////////////
 				{
 				case 0: throw std::runtime_error("error occurred in [MyJPG.h]CalculateResultsFromSubsampledData(): there are no solutions to the equation"); break; ////////////
@@ -105,6 +129,11 @@ private:
 				}*/
 			}
 		}
+
+		for (channel = 0; channel < 3; channel++)
+			for (i = 0; i < num_threads; i++)
+				if (y_cb_cr_calc_threads[channel][i].joinable())
+					y_cb_cr_calc_threads[channel][i].join();
 	}
 
 	void CalculateBlocksFromResults()
