@@ -10,7 +10,7 @@
 
 #include "Debug.h"
 
-constexpr float quality = { 1.f };
+constexpr float quality = { .4f };
 
 void init_cosblocks()
 {
@@ -55,50 +55,6 @@ void init_cosblocks()
 	// calculate block_size^2 block_size x block_size blocks
 	for (i = 0; i < block_size_sqr * block_size_sqr; i++) cosblocks[i / block_size_sqr][i % block_size_sqr] = cos(coefficients[i % block_size_sqr][0] * arguments[i / (block_size * block_size_sqr)]) * cos(coefficients[i % block_size_sqr][1] * arguments[(i / block_size_sqr) % block_size]);
 }
-
-// old gauss
-/*int gauss(std::vector<std::vector<float>> a, std::vector<float>& ans) {
-	int n = (int)a.size();
-	int m = (int)a[0].size() - 1;
-
-	std::vector<int> where(m, -1);
-	for (int col = 0, row = 0; col < m && row < n; ++col) {
-		int sel = row;
-		for (int i = row; i < n; ++i)
-			if (abs(a[i][col]) > abs(a[sel][col]))
-				sel = i;
-		if (abs(a[sel][col]) < EPS)
-			continue;
-		for (int i = col; i <= m; ++i)
-			std::swap(a[sel][i], a[row][i]);
-		where[col] = row;
-
-		for (int i = 0; i < n; ++i)
-			if (i != row) {
-				float c = a[i][col] / a[row][col];
-				for (int j = col; j <= m; ++j)
-					a[i][j] -= a[row][j] * c;
-			}
-		++row;
-	}
-
-	ans.assign(m, 0);
-	for (int i = 0; i < m; ++i)
-		if (where[i] != -1)
-			ans[i] = a[where[i]][m] / a[where[i]][i];
-	for (int i = 0; i < n; ++i) {
-		float sum = 0;
-		for (int j = 0; j < m; ++j)
-			sum += ans[j] * a[i][j];
-		if (abs(sum - a[i][m]) > EPS)
-			return 0;
-	}
-
-	for (int i = 0; i < m; ++i)
-		if (where[i] == -1)
-			return INF;
-	return 1;
-}*/
 
 int main(int argc, char** argv)
 {

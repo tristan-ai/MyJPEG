@@ -171,7 +171,7 @@ struct Elem
 {
 	std::streampos pos;
 	_Data data;
-	Elem(const std::streampos& _pos) : pos(_pos), data(_Data{}) {};
+	Elem(const std::streampos& _pos) : pos(_pos), data(_Data{}) {}
 	~Elem() {}
 	Elem(const Elem&) = delete;
 	Elem(Elem&&) = delete;

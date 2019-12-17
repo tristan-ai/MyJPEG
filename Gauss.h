@@ -2,7 +2,7 @@
 
 #include <array>
 
-constexpr size_t block_size = { 6 };
+constexpr size_t block_size = { 8 };
 constexpr size_t block_size_sqr = { block_size * block_size };
 
 typedef std::array<std::array<uint8_t, block_size>, block_size> PIXEL_BLOCK_8;
