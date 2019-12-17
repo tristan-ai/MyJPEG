@@ -10,6 +10,10 @@ typedef std::array<std::array<uint8_t, block_size>, block_size> PIXEL_BLOCK_8;
 constexpr float EPS = { 0.0000001f }; ////
 constexpr int INF = { 2 };
 
+/*
+Original is from: https://cp-algorithms.com/linear_algebra/linear-system-gauss.html
+*/
+
 int gauss(std::array<std::array<float, block_size_sqr + 1>, block_size_sqr> matrix, std::array<float, block_size_sqr>& result)
 {
 	std::vector<int> where(block_size_sqr, -1);
